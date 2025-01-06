@@ -18,15 +18,17 @@ def feature_attention_model(word_limit:int, feat_len:int):
         Models share the initial layers up to the attention layer. 
     """
     inputs = keras.layers.Input(shape=(word_limit,))
-    # embedding_layer = keras_nlp.layers.TokenAndPositionEmbedding(65536, word_limit, 64, mask_zero=True)
-    embedding_layer = keras.layers.Embedding(65536, 64, mask_zero=True)
+    embedding_layer = keras_nlp.layers.TokenAndPositionEmbedding(65536, word_limit, 64, mask_zero=True)
+    #embedding_layer = keras.layers.Embedding(65536, 64, mask_zero=True)
     embeddings = embedding_layer(inputs)
     nmask = embedding_layer.compute_mask(inputs)
     mask = keras.ops.cast(nmask, int)
     mask = mask[:, np.newaxis, :] * mask[:, :, np.newaxis]
     mask = keras.ops.cast(mask, bool)
-    att_out, att_score = keras.layers.MultiHeadAttention(1, word_limit, dropout=0.5)(embeddings, embeddings, return_attention_scores=True, attention_mask=mask)
+    att_out, att_score = keras.layers.MultiHeadAttention(1, word_limit, dropout=0.5)(embeddings, embeddings, return_attention_scores=True, attention_mask=mask) #Dropout
     att_score = keras.layers.Multiply()([att_score, keras.ops.cast(mask, int)])
+    # att_score = keras.ops.matmul([att_score, att_score])
+    # att_score = keras.layers.Softmax(axis=-1)(att_score)
     #print(nmask)
 
     output = keras.layers.Flatten()(att_out)
